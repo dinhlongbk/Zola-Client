@@ -1,9 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 // React Libary
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import { Button, Menu } from 'antd';
-import { EditOutlined, KeyOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Menu, Popconfirm } from 'antd';
+import { EditOutlined, EllipsisOutlined, KeyOutlined } from '@ant-design/icons';
 
 // Redux
 import { useDispatch, useSelector } from 'react-redux';
@@ -16,12 +16,16 @@ import { useRouter } from 'next/router';
 //Component
 const HomePage = dynamic(() => import('components/HomePage'));
 const MessageRoom = dynamic(() => import('components/Chat/MessageRoom'));
-const Directory = dynamic(() => import('components/Directory'));
+// const Directory = dynamic(() => import('components/Directory'));
 const FriendList = dynamic(() => import('components/Directory/FriendList'));
 const PhoneBook = dynamic(() => import('components/Directory/PhoneBook'));
 const SearchComponent = dynamic(() => import('components/Search'));
 const Update = dynamic(() => import('components/Account/Update'));
 const GroupList = dynamic(() => import('components/Directory/GroupList'));
+const MessageRoomSingle = dynamic(() =>
+  import('components/Chat/MessageRoomSingle')
+);
+
 const ChangePasswordUser = dynamic(() =>
   import('components/Account/ChangePassword')
 );
@@ -31,6 +35,12 @@ import { classPrefixor } from 'utils/classPrefixor';
 import useFetchAllGroup from 'components/common/hook/useFetchAllGroup';
 import Avatar from 'react-avatar';
 import useRenderAvatar from 'components/common/hook/useRenderAvatar';
+import {
+  dispatchDefaultAction,
+  fetchFriendsContactAction
+} from 'actions/friendAction';
+import { findUserByIdAction } from 'actions/userAction';
+// import MessageRoomSingle from 'components/Chat/MessageRoom/MessageRoomSingle';
 
 const prefix = 'sidebar-tab';
 const c = classPrefixor(prefix);
@@ -45,14 +55,65 @@ const SideBarTab = () => {
   const [userData, setUserData] = useState({});
   const [visiblePassword, setVisiblePassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
   // redux hook
   const dispatch = useDispatch();
   const { userProfile } = useSelector(state => state.userData);
-
+  useEffect(() => {
+    if (userProfile?.id) {
+      dispatch(fetchFriendsContactAction(userProfile?.id));
+    }
+  }, [userProfile]);
+  const { listFriendContact, messageDeletePhoneContact } = useSelector(
+    state => state.FriendReducer
+  );
   // custom hook
   const { listGroup } = useFetchAllGroup();
+  let totalFriend = listFriendContact?.length;
+  //
+  useEffect(() => {
+    if (messageDeletePhoneContact?.length > 0) {
+      toast.success(`${messageDeletePhoneContact}`, {
+        position: 'top-right',
+        autoClose: 2000
+      });
+      dispatch(fetchFriendsContactAction(userProfile.id));
+    }
+    dispatch(dispatchDefaultAction());
+  }, [messageDeletePhoneContact]);
 
+  const handleDeleteFriend = userIDWantDelete => {
+    if (userProfile.id) {
+      dispatch(deleteFriendContactAction(userProfile.id, userIDWantDelete));
+      totalFriend -= 1;
+    }
+  };
+  const getUserById = id => {
+    dispatch(findUserByIdAction(id)).then(res => {
+      setUserData(res.data);
+      setVisible(true);
+    });
+  };
+  //Menu
+  const menu = id => (
+    <Menu>
+      <Menu.Item key="0" onClick={() => getUserById(id)}>
+        Xem Thông Tin
+      </Menu.Item>
+      <Menu.Divider />
+      <Menu.Item key="1">
+        <Popconfirm
+          placement="right"
+          title="Bạn muốn hủy kết bạn với người này?"
+          onConfirm={() => handleDeleteFriend(id)}
+          okText="Yes"
+          cancelText="No"
+        >
+          Xóa Bạn
+        </Popconfirm>
+      </Menu.Item>
+    </Menu>
+  );
+  //
   // nextjs hook
   const { push } = useRouter();
 
@@ -97,7 +158,17 @@ const SideBarTab = () => {
       );
     });
   };
-
+  const renderRoomsContact = () => {
+    return listFriendContact?.map((v, key) => {
+      return (
+        <>
+          <TabPanel key={key}>
+            <MessageRoomSingle userSingle={v} listRoom={listGroup} />
+          </TabPanel>
+        </>
+      );
+    });
+  };
   const handleClickRoom = value => {
     setLoading(true);
     setInfoRoom(value);
@@ -273,16 +344,58 @@ const SideBarTab = () => {
         <TabPanel>
           <GroupList />
         </TabPanel>
+        {renderRoomsContact()}
       </>
     );
   };
-
+  const renderListFriend = useCallback(() => {
+    return listFriendContact?.map((elm, key) => {
+      return (
+        <>
+          <Tab className="userContact" key={key}>
+            <div className="left">
+              {elm.avatar === null || elm.avatar === '' ? (
+                <Avatar
+                  className="avatar-contact"
+                  name={elm.name}
+                  size="64px"
+                  round={true}
+                />
+              ) : (
+                <img
+                  src={elm.avatar}
+                  alt="avatar"
+                  style={{
+                    borderRadius: '50%',
+                    width: '64px',
+                    height: '64px',
+                    marginRight: '11px'
+                  }}
+                />
+              )}
+              <span>{elm.name}</span>
+            </div>
+            <Dropdown overlay={() => menu(elm.id)} trigger={['click']}>
+              <a
+                className="ant-dropdown-link"
+                onClick={e => e.preventDefault()}
+              >
+                <span className="right">
+                  <EllipsisOutlined />
+                </span>
+              </a>
+            </Dropdown>
+          </Tab>
+        </>
+      );
+    });
+  });
   // Đây là tab của icon danh bạ điện thoại
   const renderTabPanelInPhoneBook = () => {
     return (
       <TabPanel>
         <Tabs forceRenderTabPanel>
-          <TabList className={c`tabs__tablist`}>
+          <TabList className={c`tab__tablist`}>
             <SearchComponent />
             <div className="scrollCustom">
               <Tab className="tab">
@@ -294,7 +407,17 @@ const SideBarTab = () => {
               </Tab>
 
               <Tab className="tab">
-                <i className="fa fa-address-book"></i>
+                <i
+                  className="fa fa-address-book"
+                  style={{
+                    marginLeft: '10px',
+                    color: 'blue',
+                    fontSize: '50px',
+                    marginRight: '10px'
+                  }}
+                >
+                  {' '}
+                </i>
                 <span>Danh Bạ Bạn Bè</span>
               </Tab>
               <Tab className="tab">
@@ -304,7 +427,8 @@ const SideBarTab = () => {
                 />
                 <span>Danh Sách Nhóm</span>
               </Tab>
-              <Directory />
+              <p>Bạn bè ({totalFriend})</p>
+              {renderListFriend()}
             </div>
           </TabList>
           {renderTabPanelItemInIconPhoneBook()}

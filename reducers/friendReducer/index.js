@@ -24,6 +24,9 @@ const FriendReducer = (state = initialState, action) => {
     }
 
     // Get List Friend Contact
+    case FRIENDS_TYPE.FETCH_FRIEND_CONTACT_REQUEST: {
+      return { ...state };
+    }
     case FRIENDS_TYPE.FETCH_FRIEND_CONTACT_SUCCESS: {
       return { ...state, listFriendContact: action.payload };
     }

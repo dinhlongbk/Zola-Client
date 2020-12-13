@@ -52,3 +52,10 @@ export const getDetailMesage = id => dispatch => {
       return error;
     });
 };
+export const getInfoChatRoom = value => dispatch => {
+  console.log(value);
+  dispatch({
+    type: MESSAGE_TYPE.GET_INFO_MESSAGE_ROOM_SUCCESS,
+    payload: value
+  });
+};

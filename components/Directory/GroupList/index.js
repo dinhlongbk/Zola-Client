@@ -90,7 +90,7 @@ const GroupList = () => {
   return (
     <>
       <section className={prefix}>
-        <div className={c`header`}>
+        <div className={c`header`} style={{ padding: '20px', height: '91px' }}>
           <img
             src="https://zalo-chat-static.zadn.vn/v1/group@2x.png"
             alt="imgAddF"

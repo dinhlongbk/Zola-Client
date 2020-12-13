@@ -210,6 +210,7 @@
 }
 
 .scrollCustom {
+  height: 72vh;
   overflow-y: hidden !important;
   transition: opacity 1s;
   &:hover {
@@ -254,3 +255,12 @@
 .styleMenuItem {
   padding: 10px 20px;
 }
+.right {
+  display: flex;
+  justify-content: flex-end;
+
+  svg {
+    font-size: 20px;
+    color: black;
+
+  }}

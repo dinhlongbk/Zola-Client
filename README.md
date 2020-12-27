@@ -1,9 +1,13 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
-
+Website Chat online 
 ## Getting Started
 
-First, run the development server:
-
+Cài đặt 
+```install
+npm i 
+# or 
+yarn install
+``` 
+Khởi tạo chương trình 
 ```bash
 npm run dev
 # or
